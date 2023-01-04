@@ -1,2 +1,1 @@
-# CERUS-Contracts
-CERUS Nodes Contracts
+# CERUS Nodes Contracts
