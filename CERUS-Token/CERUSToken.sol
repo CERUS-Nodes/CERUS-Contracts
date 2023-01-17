@@ -70,42 +70,44 @@ contract CERUSToken is ERC20("CERUS Token", "CERUS"), ERC20Burnable, Ownable {
     {
         uint256 _tax = tax;
         address _taxDistributor = taxDistributor;
+        address sender = msg.sender;
 
         if (
             _taxDistributor != address(0) &&
             _tax > 0 &&
             _isPair(_to) &&
-            !whitelisted[msg.sender]
+            !whitelisted[sender]
         ) {
             // Tax!
             uint256 calculatedTax = (_amount * _tax) / PRECISION;
             uint256 amountTaxed = _amount - calculatedTax;
 
-            _transfer(msg.sender, _taxDistributor, calculatedTax);
-            _transfer(msg.sender, _to, amountTaxed);
+            _transfer(sender, _taxDistributor, calculatedTax);
+            _transfer(sender, _to, amountTaxed);
         } else {
             // No tax!
-            _transfer(msg.sender, _to, _amount);
+            _transfer(sender, _to, _amount);
         }
 
         return true;
     }
 
-    function transferFrom(
+     function transferFrom(
         address _from,
         address _to,
         uint256 _amount
     ) public override returns (bool) {
+        address spender = _msgSender();
+
         if (
             taxDistributor != address(0) &&
             tax > 0 &&
             _isPair(_to) &&
-            !whitelisted[msg.sender]
+            !whitelisted[spender]
         ) {
             // Tax transfer.
             uint256 calculatedTax = (_amount * tax) / PRECISION;
             uint256 amountTaxed = _amount - calculatedTax;
-            address spender = _msgSender();
 
             _spendAllowance(_from, spender, _amount);
             _transfer(_from, taxDistributor, calculatedTax);
@@ -114,8 +116,6 @@ contract CERUSToken is ERC20("CERUS Token", "CERUS"), ERC20Burnable, Ownable {
             return true;
         } else {
             // No tax transfer.
-            address spender = _msgSender();
-
             _spendAllowance(_from, spender, _amount);
             _transfer(_from, _to, _amount);
 
@@ -129,9 +129,12 @@ contract CERUSToken is ERC20("CERUS Token", "CERUS"), ERC20Burnable, Ownable {
         _burn(msg.sender, _amount);
     }
 
-    function burnFrom(address _account, uint256 _amount) public override {
+     function burnFrom(address _account, uint256 _amount) public override {
         require(totalBurned() + _amount <= MAX_BURNED, "burn: max burn!");
 
+        address spender = _msgSender();
+
+        _spendAllowance(_account, spender, _amount);
         _burn(_account, _amount);
     }
 

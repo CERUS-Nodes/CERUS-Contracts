@@ -159,40 +159,83 @@ contract CERUSVesting is AccessControl, ReentrancyGuard {
     }
 
     function deposit(uint256 _depositAmount) external nonReentrant {
-        _canDeposit(msg.sender, _depositAmount);
+        address investor = msg.sender;
+        address _treasury = treasury;
 
+        /// @dev Deposit requirements
+        require(initialized, "deposit: not initialized!");
+        require(_treasury != address(0), "deposit: treasury not set!");
+        require(
+            !useWhitelist || whitelisted[investor],
+            "deposit: not whitelisted!"
+        );
+        require(isSale(), "deposit: sale is not live!");
+        require(
+            _depositAmount >= minBuy ||
+                investorInfo[investor].depositedAmount > 0,
+            "deposit: not enough!"
+        );
+        uint256 amountCerusToGet = (_depositAmount * (10**CERUS_DECIMALS)) /
+            cerusPrice;
+        require(
+            amountCerusToGet <= (totalCerus - totalVested),
+            "deposit: too much!"
+        );
+        require(
+            _depositAmount <=
+                IERC20(buyToken).allowance(investor, address(this)),
+            "deposit: not approved!"
+        );
+
+        // Deposit
         bool success = IERC20(buyToken).transferFrom(
-            msg.sender,
-            treasury,
+            investor,
+            _treasury,
             _depositAmount
         );
-        
+
         require(success, "deposit: tx error!");
 
         uint256 vestAmount = (_depositAmount * (10**CERUS_DECIMALS)) /
             cerusPrice;
         totalVested += vestAmount;
 
-        investorInfo[msg.sender].depositedAmount += _depositAmount;
-        investorInfo[msg.sender].vestedAmount += vestAmount;
+        investorInfo[investor].depositedAmount += _depositAmount;
+        investorInfo[investor].vestedAmount += vestAmount;
 
-        emit Deposit(msg.sender, vestAmount);
+        emit Deposit(investor, vestAmount);
     }
 
     function claim() external nonReentrant {
-        _canClaim(msg.sender);
+        address _cerusToken = cerusToken;
+        address investor = msg.sender;
 
-        (uint256 claimableEpochs, uint256 claimableAmount) = pendingEpochs(
-            msg.sender
+        /// @dev Claim requirements
+        require(_cerusToken != address(0), "Cerus: not set!");
+        require(claimStart <= block.timestamp, "claim: not yet!");
+        require(
+            investorInfo[investor].vestedAmount > 0,
+            "claim: no investment!"
         );
 
-        investorInfo[msg.sender].claimedEpochs += claimableEpochs;
-        investorInfo[msg.sender].vestedAmount -= claimableAmount;
+        (uint256 claimableEpochs, uint256 claimableAmount) = pendingEpochs(
+            investor
+        );
+
+        require(claimableEpochs > 0, "claim: wait until next epoch!");
+
+        uint256 balance = IERC20(_cerusToken).balanceOf(address(this));
+
+        require(balance > 0, "claim: token balance low!");
+
+        // increment vars and send claim
+        investorInfo[investor].claimedEpochs += claimableEpochs;
+        investorInfo[investor].vestedAmount -= claimableAmount;
         totalClaimed += claimableAmount;
 
-        IERC20(cerusToken).transfer(msg.sender, claimableAmount);
+        IERC20(_cerusToken).transfer(investor, claimableAmount);
 
-        emit Claim(msg.sender, claimableAmount);
+        emit Claim(investor, claimableAmount);
     }
 
     function withdrawUnsold() external {
@@ -214,13 +257,17 @@ contract CERUSVesting is AccessControl, ReentrancyGuard {
         hasWithdrawnUnsold = true;
 
         /// @notice we only burn only after the public sale round
-        if (isPublicSale && toBurn > 0) {
+        bool _isPublicSale = isPublicSale;
+
+        if (_isPublicSale && toBurn > 0) {
             ERC20Burnable(_cerusToken).burn(toBurn);
         }
-        if ((isPublicSale && toTransfer > 0) || (!isPublicSale && unsold > 0)) {
+        if (
+            (_isPublicSale && toTransfer > 0) || (!_isPublicSale && unsold > 0)
+        ) {
             IERC20(_cerusToken).transfer(
                 treasury,
-                isPublicSale ? toTransfer : unsold
+                _isPublicSale ? toTransfer : unsold
             );
         }
 
@@ -246,10 +293,6 @@ contract CERUSVesting is AccessControl, ReentrancyGuard {
     }
 
     // HELPERS
-    function claimEnd() public view returns (uint256) {
-        return claimStart + (totalEpochs * epochLength);
-    }
-
     function isSale() public view returns (bool) {
         bool sale = (saleStart <= block.timestamp) &&
             (block.timestamp < saleEnd);
@@ -259,10 +302,13 @@ contract CERUSVesting is AccessControl, ReentrancyGuard {
 
     /// @dev we count claimable epochs from 1.
     function currentEpoch() public view returns (uint256) {
-        if (!_hasEpochStarted()) return 0;
-        if (_haveEpochsFinished()) return totalEpochs;
+        uint256 _claimStart = claimStart;
+        uint256 _claimEnd = _claimStart + (totalEpochs * epochLength);
 
-        return 1 + ((block.timestamp - claimStart) / epochLength);
+        if (!(initialized && (block.timestamp >= _claimStart))) return 0;
+        if (initialized && (block.timestamp >= _claimEnd)) return totalEpochs;
+
+        return 1 + ((block.timestamp - _claimStart) / epochLength);
     }
 
     function pendingEpochs(address _investor)
@@ -281,60 +327,6 @@ contract CERUSVesting is AccessControl, ReentrancyGuard {
             unclaimedEpochs;
 
         return (claimableEpochs, claimableAmount);
-    }
-
-    function _canDeposit(address _investor, uint256 _amount) private view {
-        require(initialized, "deposit: not initialized!");
-        require(treasury != address(0), "deposit: treasury not set!");
-        require(
-            !useWhitelist || whitelisted[_investor],
-            "deposit: not whitelisted!"
-        );
-        require(isSale(), "deposit: sale is not live!");
-        require(
-            _amount >= minBuy || investorInfo[_investor].depositedAmount > 0,
-            "deposit: not enough!"
-        );
-        uint256 amountCerusToGet = (_amount * (10**CERUS_DECIMALS)) /
-            cerusPrice;
-        require(
-            amountCerusToGet <= (totalCerus - totalVested),
-            "deposit: too much!"
-        );
-        require(
-            _amount <= IERC20(buyToken).allowance(msg.sender, address(this)),
-            "deposit: not approved!"
-        );
-    }
-
-    function _canClaim(address _investor) private view {
-        address _cerusToken = cerusToken;
-        require(_cerusToken != address(0), "Cerus: not set!");
-        require(claimStart <= block.timestamp, "claim: not yet!");
-        require(
-            investorInfo[_investor].vestedAmount > 0,
-            "claim: no investment!"
-        );
-        require(_hasEpochsToClaim(_investor), "claim: wait until next epoch!");
-
-        uint256 balance = IERC20(_cerusToken).balanceOf(address(this));
-
-        require(balance > 0, "claim: token balance low!");
-    }
-
-    function _hasEpochsToClaim(address _investor) private view returns (bool) {
-        uint256 epoch = currentEpoch();
-        uint256 claimableEpochs = epoch - investorInfo[_investor].claimedEpochs;
-
-        return claimableEpochs > 0;
-    }
-
-    function _hasEpochStarted() private view returns (bool) {
-        return initialized && (block.timestamp >= claimStart);
-    }
-
-    function _haveEpochsFinished() private view returns (bool) {
-        return block.timestamp >= claimEnd();
     }
 
     // END OF CONTRACT
