@@ -92,7 +92,7 @@ contract CERUSToken is ERC20("CERUS Token", "CERUS"), ERC20Burnable, Ownable {
         return true;
     }
 
-     function transferFrom(
+    function transferFrom(
         address _from,
         address _to,
         uint256 _amount
@@ -129,7 +129,7 @@ contract CERUSToken is ERC20("CERUS Token", "CERUS"), ERC20Burnable, Ownable {
         _burn(msg.sender, _amount);
     }
 
-     function burnFrom(address _account, uint256 _amount) public override {
+    function burnFrom(address _account, uint256 _amount) public override {
         require(totalBurned() + _amount <= MAX_BURNED, "burn: max burn!");
 
         address spender = _msgSender();
@@ -146,6 +146,8 @@ contract CERUSToken is ERC20("CERUS Token", "CERUS"), ERC20Burnable, Ownable {
     }
 
     function setTaxDistributor(address _taxDistributor) external onlyOwner {
+        require(taxDistributor == address(0), "Tax distributor set!");
+
         taxDistributor = _taxDistributor;
 
         emit TaxDistributor(_taxDistributor);
@@ -153,6 +155,7 @@ contract CERUSToken is ERC20("CERUS Token", "CERUS"), ERC20Burnable, Ownable {
 
     function setTax(uint256 _tax) external onlyOwner {
         require(_tax <= MAX_TAX, "Tax: too high!");
+       
         tax = _tax;
 
         emit Tax(_tax);
