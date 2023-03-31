@@ -73,12 +73,12 @@ contract CERUSNFTRewardDistribution is
     // REWARDS
     struct PendingReward {
         uint256 time; // block timestamp
-        address collection;
-        uint256 amountMetis;
-        uint256 amountCerus;
-        address[] users;
+        address collection; // collection address
+        uint256 amountMetis; // amount of metis
+        uint256 amountCerus; // amount of cerus
+        address[] users; // array of users to receive reward
     }
-    PendingReward[] private pendingRewards;
+    PendingReward[] private pendingRewards; // array of pending rewards
 
     // USERS
     struct UserInfo {
@@ -91,12 +91,12 @@ contract CERUSNFTRewardDistribution is
     address[] private _userAddresses; // Array of user addresses for reward distribution
 
     // ADDRESSES
-    address public cerus = address(0);
-    address public metis = 0xDeadDeAddeAddEAddeadDEaDDEAdDeaDDeAD0000;
-    address public treasury = 0xa9849eC5db1DD4cd5eB25d2180a64f21A45e7bD8;
+    address public cerus = address(0); /// @dev Not deployed yet! See setCerus method.
+    address public metis = 0xDeadDeAddeAddEAddeadDEaDDEAdDeaDDeAD0000; // the metis erc20 token address
+    address public treasury = 0xa9849eC5db1DD4cd5eB25d2180a64f21A45e7bD8; // project gnosis safe treausry address
 
     // BOOLEANS
-    bool isCerusSet;
+    bool isCerusSet; /// @dev Determines if the cerus token address can be set.
 
     // CONSTRUCTOR
     constructor() {
