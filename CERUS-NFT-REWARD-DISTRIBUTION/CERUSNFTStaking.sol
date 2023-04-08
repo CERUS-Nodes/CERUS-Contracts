@@ -338,8 +338,6 @@ contract CERUSNFTRewardDistribution is
         );
         _claim(address(msg.sender));
         _withdraw(collection, tokenId);
-
-        emit Withdraw(msg.sender, collection, tokenId);
     }
 
     /**
@@ -476,16 +474,15 @@ contract CERUSNFTRewardDistribution is
                     if (pendingRewards[i].users.length == 0) {
                         _removeRewardAtIndex(i);
                         numberOfRewards -= 1;
-
-                        // emit event
-                        emit Reward(
-                            user,
-                            collection,
-                            users[user].tokens[collection],
-                            totalRewardMetis,
-                            totalRewardCerus
-                        );
                     }
+                    // emit event
+                    emit Reward(
+                        user,
+                        collection,
+                        users[user].tokens[collection],
+                        totalRewardMetis,
+                        totalRewardCerus
+                    );
                 }
             }
         }
@@ -875,7 +872,8 @@ contract CERUSNFTRewardDistribution is
      * @param from The address that previously owned the token.
      * @param tokenId The ID of the token being transferred.
      * @param data Additional data sent with the transfer.
-     * @return A bytes4 selector that indicates the successful receipt of the token (IERC721Receiver.onERC721Received.selector).
+     * @return A bytes4 selector that indicates the successful receipt of the token
+     *           (IERC721Receiver.onERC721Received.selector).
      */
     function onERC721Received(
         address operator,
