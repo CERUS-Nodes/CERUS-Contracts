@@ -9,6 +9,9 @@
 ### Public Sale Round Vesting Contract
 [`0xCcA90D662a7834C37A02c932B1AC9cB88377C47E`](https://andromeda-explorer.metis.io/address/0xCcA90D662a7834C37A02c932B1AC9cB88377C47E)
 
+### 2nd Public Sale Round Vesting Contract
+[`0x8173a30D515AA704de855c21DB79600433D1378b`](https://andromeda-explorer.metis.io/address/0x8173a30D515AA704de855c21DB79600433D1378b)
+
 ### CERUS GEN ZERO NFT Collection
 [`0xEf1d37110F9D1091eC70D500d3e141b523fFe056`](https://andromeda-explorer.metis.io/token/0xEf1d37110F9D1091eC70D500d3e141b523fFe056)   
 [Collection on the Tofu NFT Market](https://tofunft.com/discover/items?contracts=69287&network=1088)
