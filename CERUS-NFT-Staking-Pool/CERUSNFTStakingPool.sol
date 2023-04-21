@@ -58,13 +58,6 @@ contract CERUSNFTStakingPool is Ownable, ReentrancyGuard, IERC721Receiver {
     // Info of pool.
     PoolInfo public poolInfo;
 
-    // Info of Reward.
-    struct Reward {
-        uint256 amountPrimary;
-        uint256 amountSecondary;
-    }
-    Reward[] rewards;
-
     // The reward tokens.
     IERC20 public rewardTokenPrimary;
     IERC20 public rewardTokenSecondary;
