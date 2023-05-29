@@ -15,3 +15,6 @@
 ### CERUS GEN ZERO NFT Collection
 [`0xEf1d37110F9D1091eC70D500d3e141b523fFe056`](https://andromeda-explorer.metis.io/token/0xEf1d37110F9D1091eC70D500d3e141b523fFe056)   
 [Collection on the Tofu NFT Market](https://tofunft.com/discover/items?contracts=69287&network=1088)
+
+### CERUS NFT Staking
+[`0x6391e05A2A3d25b9181865755b798fa94451aa49`](https://andromeda-explorer.metis.io/address/0x6391e05A2A3d25b9181865755b798fa94451aa49)
